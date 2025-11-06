@@ -1,4 +1,5 @@
 # 🧩 Euclid: Smart Insurance Metagraph
+![car](https://github.com/user-attachments/assets/d5a296ad-c243-4cc0-94d6-fa895aaa7027)
 
 > Decentralized insurance policy verification and risk assessment powered by Constellation Network
 
