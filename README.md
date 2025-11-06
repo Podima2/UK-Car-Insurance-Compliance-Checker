@@ -9,7 +9,7 @@
 
 ## 📋 Overview
 
-Euclid is a specialized Layer-0/Layer-1 metagraph integration built on the Constellation Network that revolutionizes insurance policy management. The system enables insurance providers to upload cryptographically signed policy templates while allowing end-users to query these policies using natural language for instant, trustless risk assessment.
+This application built on the Constellation Network revolutionises insurance policy management, it enables insurance providers to upload cryptographically signed policy templates while allowing end-users to query these policies using natural language for instant, trustless risk assessment.
 
 **Example Query:** *"Does changing my exhaust void my insurance?"*  
 **Response:** ⚠️ High Risk: Policy may be void if modifications are undeclared
