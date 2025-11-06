@@ -1,0 +1,24 @@
+{
+  "UploadContractTemplate": {
+    "providerName": "SafeDrive Insurance",
+    "templateVersion": "1.0",
+    "terms": [
+      {
+        "category": "Vehicle Changes",
+        "description": "Material changes to the insured vehicle",
+        "voidingConditions": ["Performance modifications"],
+        "notificationRequired": true
+      }
+    ],
+    "riskRules": [
+      {
+        "keywords": ["exhaust", "turbo", "supercharger"],
+        "category": "Vehicle Modifications",
+        "riskWeight": 75,
+        "requiresNotification": true,
+        "explanation": "Performance modifications may void your policy"
+      }
+    ],
+    "uploadedBy": "admin"
+  }
+}

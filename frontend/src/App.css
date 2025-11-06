@@ -1,0 +1,52 @@
+
+.App {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+select, textarea, button {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+button {
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+.result {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid;
+}
+.risk-low {
+  background: #d4edda;
+  border-color: #28a745;
+}
+.risk-medium {
+  background: #fff3cd;
+  border-color: #ffc107;
+}
+.risk-high {
+  background: #f8d7da;
+  border-color: #dc3545;
+}
+.error {
+  color: red;
+  padding: 10px;
+  background: #fee;
+  border-radius: 4px;
+}

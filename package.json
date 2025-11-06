@@ -1,0 +1,17 @@
+{
+  "name": "euclid-development-environment",
+  "version": "1.0.0",
+  "description": "* You should have Docker installed * Check the [installation guide](https://docs.docker.com/engine/install/) * You need to have **at least 8GB of RAM allocated to Docker**",
+  "main": "sign-and-upload.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@stardust-collective/dag4": "^2.7.0",
+    "elliptic": "^6.6.1"
+  }
+}

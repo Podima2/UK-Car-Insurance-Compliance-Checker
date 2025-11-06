@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Insurance Template Upload</title>
+  <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-sha512@0.8.0/build/sha512.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
+  <style>
+    body { 
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    h1 { color: #2563eb; }
+    h2 { color: #475569; margin-top: 24px; }
+    .section { 
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    label { 
+      display: block;
+      margin: 12px 0 4px;
+      font-weight: 500;
+      color: #334155;
+    }
+    input, textarea { 
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    textarea {
+      font-family: 'Courier New', monospace;
+      min-height: 120px;
+    }
+    button { 
+      margin-top: 16px;
+      padding: 12px 24px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    pre { 
+      background: #0f172a;
+      color: #10b981;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .success { color: #10b981; }
+    .error { color: #ef4444; }
+    small { color: #64748b; }
+  </style>
+</head>
+<body>
+  <h1>📋 Insurance Template Upload</h1>
+  <p>Upload an insurance contract template to the Constellation metagraph.</p>
+
+  <div class="section">
+    <h2>Connection Settings</h2>
+    <label>Data L1 URL</label>
+    <input id="dataL1Url" type="text" value="http://localhost:9400" />
+    <small>Metagraph Data L1 endpoint</small>
+
+    <label>Reward Address (DAG)</label>
+    <input id="rewardAddress" type="text" placeholder="DAG..." />
+    <small>Your DAG address to receive rewards</small>
+
+    <label>Private Key (hex) <em>[optional - auto-generates if empty]</em></label>
+    <input id="privKey" type="text" placeholder="Leave empty to auto-generate" />
+    <small>64-character hex string. Auto-generated if left empty.</small>
+  </div>
+
+  <div class="section">
+    <h2>Template JSON</h2>
+    <textarea id="templateJson" style="min-height: 300px;">{
+  "providerName": "Acme Insurance",
+  "templateVersion": "1.0",
+  "uploadedBy": "admin",
+  "terms": [
+    {
+      "category": "Coverage",
+      "description": "Basic coverage terms",
+      "voidingConditions": ["fraud", "non-payment"],
+      "notificationRequired": true
+    },
+    {
+      "category": "Liability",
+      "description": "Third-party liability coverage",
+      "voidingConditions": ["criminal activity"],
+      "notificationRequired": false
+    }
+  ],
+  "riskRules": [
+    {
+      "keywords": ["accident", "injury", "collision"],
+      "category": "Coverage",
+      "riskWeight": 8,
+      "requiresNotification": true,
+      "explanation": "High-risk incident requiring immediate attention"
+    },
+    {
+      "keywords": ["damage", "repair"],
+      "category": "Coverage",
+      "riskWeight": 4,
+      "requiresNotification": false,
+      "explanation": "Moderate risk, routine processing"
+    }
+  ]
+}</textarea>
+    <small>Complete template as JSON object</small>
+  </div>
+
+  <button id="send">🚀 Upload Template</button>
+
+  <h2>Response</h2>
+  <pre id="log"></pre>
+
+  <script>
+    const log = (...args) => {
+      const el = document.getElementById('log');
+      el.textContent += args.map(a => typeof a === 'string' ? a : JSON.stringify(a, null, 2)).join(' ') + '\n';
+    };
+
+    const clearLog = () => {
+      document.getElementById('log').textContent = '';
+    };
+
+    // Converts a JS string to Uint8Array (UTF-8)
+    function utf8Bytes(str) {
+      const encoder = new TextEncoder();
+      return encoder.encode(str);
+    }
+
+    // Hex helpers
+    function toHex(u8) {
+      return Array.from(u8).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    document.getElementById('send').onclick = async () => {
+      clearLog();
+      const btn = document.getElementById('send');
+      btn.disabled = true;
+      
+      try {
+        const dataL1Url = document.getElementById('dataL1Url').value.trim();
+        const rewardAddress = document.getElementById('rewardAddress').value.trim();
+        let priv = document.getElementById('privKey').value.trim();
+
+        if (!dataL1Url) { log('❌ Data L1 URL required'); return; }
+        if (!rewardAddress || !/^DAG/.test(rewardAddress)) { log('❌ Valid DAG address required'); return; }
+
+        let template;
+        try {
+          template = JSON.parse(document.getElementById('templateJson').value);
+        } catch (e) {
+          log('❌ Invalid JSON:', e.message);
+          return;
+        }
+
+        log('📦 Building template...');
+        // Match case class field order: providerName, templateVersion, terms, riskRules, uploadedBy, rewardAddress
+        const value = { 
+          UploadContractTemplate: {
+            providerName: template.providerName,
+            templateVersion: template.templateVersion,
+            terms: template.terms,
+            riskRules: template.riskRules,
+            uploadedBy: template.uploadedBy,
+            rewardAddress: rewardAddress
+          }
+        };
+
+        log('🔐 Signing transaction...');
+
+        // Remove nulls and serialize (match backend .deepDropNullValues.noSpaces)
+        const removeNulls = (obj) => {
+          if (Array.isArray(obj)) return obj.map(removeNulls);
+          if (obj && typeof obj === 'object') {
+            return Object.fromEntries(
+              Object.entries(obj)
+                .filter(([, v]) => v !== null && v !== undefined)
+                .map(([k, v]) => [k, removeNulls(v)])
+            );
+          }
+          return obj;
+        };
+        
+        const cleanValue = removeNulls(value);
+        const encoded = JSON.stringify(cleanValue);
+        log('Signing:', encoded.substring(0, 100) + '...');
+        
+        const serializedTx = toHex(utf8Bytes(encoded));
+        const sha256hex = sha256(new Uint8Array(serializedTx.match(/.{1,2}/g).map(b => parseInt(b, 16))));
+        const digest = sha512(sha256hex);
+        log('Hash:', sha256hex.substring(0, 16) + '...');
+
+        if (typeof elliptic === 'undefined') {
+          log('❌ Elliptic library not loaded');
+          return;
+        }
+        const EC = elliptic.ec;
+        const curve = new EC('secp256k1');
+        
+        if (!priv) {
+          priv = [...crypto.getRandomValues(new Uint8Array(32))].map(b=>b.toString(16).padStart(2,'0')).join('');
+          log('🔑 Generated private key:', priv);
+        }
+        
+        const key = curve.keyFromPrivate(priv, 'hex');
+        const sig = key.sign(digest);
+        const signature = Array.from(sig.toDER()).map(b => b.toString(16).padStart(2,'0')).join('');
+
+        // Get public key (without 04 prefix)
+        let pubHex = key.getPublic('hex');
+        if (pubHex.startsWith('04')) pubHex = pubHex.slice(2);
+
+        const body = { value, proofs: [{ id: pubHex, signature }] };
+        
+        log('📤 Sending to metagraph...');
+        log(`Endpoint: ${dataL1Url}/data`);
+
+        const resp = await fetch(`${dataL1Url}/data`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        const text = await resp.text();
+        if (!resp.ok) {
+          log('❌ HTTP Error:', resp.status);
+          log(text);
+          return;
+        }
+        
+        const result = JSON.parse(text);
+        log('✅ SUCCESS!');
+        log('Hash:', result.hash);
+        log(`Provider: ${template.providerName}`);
+        log(`Terms: ${template.terms.length}, Rules: ${template.riskRules.length}`);
+        log('\nQuery: curl http://localhost:9200/insurance/providers');
+        
+      } catch (e) {
+        log('❌ Error:', e.message || String(e));
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>
